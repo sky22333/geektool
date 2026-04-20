@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using GeekToolDownloader.Models;
 
@@ -12,19 +13,21 @@ namespace GeekToolDownloader.Services
     {
         AppConfig Config { get; }
         void SaveConfig();
-        Task<List<ToolItemModel>> LoadToolListAsync();
+        Task<List<ToolItemModel>> LoadToolListAsync(bool forceRefresh = false);
+        void NotifyRemoteListUrlChanged();
+        event EventHandler? RemoteListUrlChanged;
     }
 
     public class ConfigurationService : IConfigurationService
     {
         private readonly string _configPath;
         private readonly string _localListPath;
-        private static readonly System.Net.Http.HttpClient _httpClient = new System.Net.Http.HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(10)
-        };
+        private List<ToolItemModel>? _cachedList;
+        private DateTime _cacheExpiry;
+        private string? _cachedUrl;
 
         public AppConfig Config { get; private set; } = new AppConfig();
+        public event EventHandler? RemoteListUrlChanged;
 
         public ConfigurationService()
         {
@@ -85,16 +88,30 @@ namespace GeekToolDownloader.Services
             catch { /* Ignore */ }
         }
 
-        public async Task<List<ToolItemModel>> LoadToolListAsync()
+        public async Task<List<ToolItemModel>> LoadToolListAsync(bool forceRefresh = false)
         {
+            var currentUrl = Config.RemoteListUrl;
+            var now = DateTime.UtcNow;
+
+            if (!forceRefresh && _cachedList != null && _cachedUrl == currentUrl && now < _cacheExpiry)
+            {
+                return _cachedList;
+            }
+
             List<ToolItemModel>? list = null;
 
-            if (!string.IsNullOrEmpty(Config.RemoteListUrl))
+            if (!string.IsNullOrEmpty(currentUrl))
             {
                 try
                 {
-                    var json = await _httpClient.GetStringAsync(Config.RemoteListUrl);
-                    list = JsonConvert.DeserializeObject<List<ToolItemModel>>(json);
+                    var httpClient = DownloadService.GetHttpClient();
+                    using var cts = new CancellationTokenSource(5000);
+                    var task = httpClient.GetStringAsync(currentUrl);
+                    if (await Task.WhenAny(task, Task.Delay(5000, cts.Token)) == task)
+                    {
+                        var json = await task;
+                        list = JsonConvert.DeserializeObject<List<ToolItemModel>>(json);
+                    }
                 }
                 catch { }
             }
@@ -125,7 +142,17 @@ namespace GeekToolDownloader.Services
                 catch { }
             }
 
-            return list ?? new List<ToolItemModel>();
+            var result = list ?? new List<ToolItemModel>();
+            _cachedList = result;
+            _cachedUrl = currentUrl;
+            _cacheExpiry = now.AddMinutes(5);
+
+            return result;
+        }
+
+        public void NotifyRemoteListUrlChanged()
+        {
+            RemoteListUrlChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }

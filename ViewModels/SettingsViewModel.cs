@@ -119,6 +119,7 @@ namespace GeekToolDownloader.ViewModels
         {
             _configService.Config.RemoteListUrl = value;
             DebounceSave();
+            _configService.NotifyRemoteListUrlChanged();
         }
 
         partial void OnProxyEnabledChanged(bool value)

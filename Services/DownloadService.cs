@@ -34,6 +34,14 @@ namespace GeekToolDownloader.Services
         private static HttpClient _httpClient = CreateHttpClient(new AppConfig());
         private static readonly object _httpClientLock = new object();
 
+        public static HttpClient GetHttpClient()
+        {
+            lock (_httpClientLock)
+            {
+                return _httpClient;
+            }
+        }
+
         public static void UpdateHttpClient(AppConfig config)
         {
             HttpClient? oldClient = null;

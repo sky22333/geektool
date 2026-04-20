@@ -61,13 +61,19 @@ namespace GeekToolDownloader.ViewModels
             _environmentService = environmentService;
             Settings = settings;
             
+            _configService.RemoteListUrlChanged += OnRemoteListUrlChanged;
             _ = LoadToolsAsync();
         }
 
-        [RelayCommand]
-        private async Task LoadToolsAsync()
+        private async void OnRemoteListUrlChanged(object? sender, EventArgs e)
         {
-            var list = await _configService.LoadToolListAsync();
+            await LoadToolsAsync(forceRefresh: true);
+        }
+
+        [RelayCommand]
+        private async Task LoadToolsAsync(bool forceRefresh = false)
+        {
+            var list = await _configService.LoadToolListAsync(forceRefresh);
             Tools.Clear();
             foreach (var item in list)
             {
@@ -345,6 +351,7 @@ namespace GeekToolDownloader.ViewModels
             if (_disposed) return;
             _disposed = true;
 
+            _configService.RemoteListUrlChanged -= OnRemoteListUrlChanged;
             Settings?.Dispose();
 
             var cts = Interlocked.Exchange(ref _cts, null);
