@@ -56,9 +56,10 @@ namespace GeekToolDownloader
             ConfigService = new ConfigurationService();
             var downloadService = new DownloadService();
             var installationService = new InstallationService();
+            var environmentService = new EnvironmentService();
             var settingsVM = new SettingsViewModel(ConfigService);
             
-            MainVM = new MainViewModel(ConfigService, downloadService, installationService, settingsVM);
+            MainVM = new MainViewModel(ConfigService, downloadService, installationService, environmentService, settingsVM);
 
             var mainWindow = new MainWindow
             {

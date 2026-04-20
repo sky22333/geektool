@@ -264,5 +264,42 @@ namespace GeekToolDownloader
             Hide();
         }
 
+        public void ShowAddPathDialog()
+        {
+            AddPathDialog.Visibility = Visibility.Visible;
+            AddPathDialog.IsHitTestVisible = true;
+            
+            var duration = new Duration(TimeSpan.FromMilliseconds(200));
+            var opAnim = new DoubleAnimation(0, 1, duration) 
+            { 
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } 
+            };
+            
+            AddPathDialog.BeginAnimation(UIElement.OpacityProperty, opAnim);
+            
+            Dispatcher.InvokeAsync(() =>
+            {
+                PathInputBox?.Focus();
+                PathInputBox?.SelectAll();
+            }, System.Windows.Threading.DispatcherPriority.Input);
+        }
+
+        public void HideAddPathDialog()
+        {
+            var duration = new Duration(TimeSpan.FromMilliseconds(150));
+            var opAnim = new DoubleAnimation(1, 0, duration) 
+            { 
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn } 
+            };
+            
+            opAnim.Completed += (s, e) =>
+            {
+                AddPathDialog.Visibility = Visibility.Collapsed;
+                AddPathDialog.IsHitTestVisible = false;
+            };
+            
+            AddPathDialog.BeginAnimation(UIElement.OpacityProperty, opAnim);
+        }
+
     }
 }

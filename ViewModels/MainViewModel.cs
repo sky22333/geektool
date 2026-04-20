@@ -21,6 +21,7 @@ namespace GeekToolDownloader.ViewModels
         private readonly IConfigurationService _configService;
         private readonly IDownloadService _downloadService;
         private readonly IInstallationService _installationService;
+        private readonly IEnvironmentService _environmentService;
 
         public ObservableCollection<ToolItemViewModel> Tools { get; } = new ObservableCollection<ToolItemViewModel>();
 
@@ -39,6 +40,9 @@ namespace GeekToolDownloader.ViewModels
         [ObservableProperty]
         private string _selectAllButtonText = "一键全选";
 
+        [ObservableProperty]
+        private string _pathInputText = string.Empty;
+
         public SettingsViewModel Settings { get; }
 
         private CancellationTokenSource? _cts;
@@ -48,11 +52,13 @@ namespace GeekToolDownloader.ViewModels
             IConfigurationService configService,
             IDownloadService downloadService,
             IInstallationService installationService,
+            IEnvironmentService environmentService,
             SettingsViewModel settings)
         {
             _configService = configService;
             _downloadService = downloadService;
             _installationService = installationService;
+            _environmentService = environmentService;
             Settings = settings;
             
             _ = LoadToolsAsync();
@@ -130,6 +136,51 @@ namespace GeekToolDownloader.ViewModels
 
         [RelayCommand]
         private void CloseSettings() => IsSettingsOpen = false;
+
+        [RelayCommand]
+        private void ShowAddPathDialog()
+        {
+            PathInputText = string.Empty;
+            (Application.Current.MainWindow as MainWindow)?.ShowAddPathDialog();
+        }
+
+        [RelayCommand]
+        private void CloseAddPathDialog()
+        {
+            (Application.Current.MainWindow as MainWindow)?.HideAddPathDialog();
+        }
+
+        [RelayCommand]
+        private async Task ConfirmAddPathAsync()
+        {
+            var path = PathInputText?.Trim();
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                MessageBox.Show("请输入有效的路径", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            (Application.Current.MainWindow as MainWindow)?.HideAddPathDialog();
+
+            var success = await Task.Run(() => _environmentService.AddToPath(path!));
+            
+            if (success)
+            {
+                MessageBox.Show(
+                    $"已成功将以下路径添加到用户环境变量：\n\n{path}\n\n新打开的终端窗口将生效。",
+                    "环境变量已更新",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show(
+                    "添加环境变量失败，请检查权限或手动添加。",
+                    "操作失败",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
 
         [RelayCommand(CanExecute = nameof(CanStartDownloadProcess))]
         private async Task StartDownloadProcessAsync()

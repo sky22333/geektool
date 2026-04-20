@@ -52,6 +52,7 @@
                                FontWeight="Bold" Margin="20,0,0,0" VerticalAlignment="Center" />
                     
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Content="🌐" Style="{StaticResource TitleBarButtonStyle}" Command="{Binding ShowAddPathDialogCommand}" ToolTip="添加到环境变量"/>
                         <Button Content="⚙" Style="{StaticResource TitleBarButtonStyle}" Command="{Binding OpenSettingsCommand}"/>
                         <Button Content="—" Style="{StaticResource TitleBarButtonStyle}" Click="Minimize_Click"/>
                         <Button Content="✕" Style="{StaticResource TitleBarButtonStyle}" Click="Close_Click"/>
@@ -291,6 +292,34 @@
                             </StackPanel>
                         </ScrollViewer>
                     </Grid>
+                </Grid>
+
+                <!-- Add Path Dialog Overlay (Independent Layer) -->
+                <Grid x:Name="AddPathDialog" Opacity="0" Visibility="Collapsed" IsHitTestVisible="False" Grid.RowSpan="2">
+                    <!-- Dialog Card -->
+                    <Border Background="{DynamicResource BgWindow}" BorderBrush="{DynamicResource ThemeAccent}" BorderThickness="2" 
+                            CornerRadius="16" Width="520" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <Border.Effect>
+                            <DropShadowEffect Color="{DynamicResource ThemeAccentColor}" BlurRadius="50" ShadowDepth="0" Opacity="0.25"/>
+                        </Border.Effect>
+                        <StackPanel Margin="32,28,32,28">
+                            <TextBlock Text="添加到环境变量" Foreground="{DynamicResource TextP1}" 
+                                       FontSize="18" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <TextBlock Text="输入要添加到 PATH 的文件夹路径" Foreground="{DynamicResource TextP2}" 
+                                       FontSize="12" Margin="0,0,0,20"/>
+                            
+                            <TextBox x:Name="PathInputBox" Text="{Binding PathInputText, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource ModernInputStyle}" Height="40" FontSize="13"
+                                     VerticalContentAlignment="Center" Padding="14,0" FontFamily="Consolas" Margin="0,0,0,24"/>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="取消" Command="{Binding CloseAddPathDialogCommand}" 
+                                        Style="{StaticResource ThemeButtonStyle}" Width="80" Height="36" FontSize="13" Padding="0"/>
+                                <Button Content="添加" Command="{Binding ConfirmAddPathCommand}" 
+                                        Style="{StaticResource DownloadButtonStyle}" Width="80" Height="36" Margin="12,0,0,0" FontSize="13" Padding="0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                 </Grid>
             </Grid>
         </Border>
