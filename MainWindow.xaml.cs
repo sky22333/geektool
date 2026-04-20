@@ -117,15 +117,15 @@ namespace GeekToolDownloader
             {
                 if (App.MainVM.IsSettingsOpen)
                 {
-                    AnimateView(MainView, MainViewScale, 1, 0.9, 1, 0);
+                    AnimateView(MainView, 1, 0);
                     SettingsView.IsHitTestVisible = true;
-                    AnimateView(SettingsView, SettingsViewScale, 1.1, 1, 0, 1);
+                    AnimateView(SettingsView, 0, 1);
                 }
                 else
                 {
-                    AnimateView(MainView, MainViewScale, 0.9, 1, 0, 1);
+                    AnimateView(MainView, 0, 1);
                     SettingsView.IsHitTestVisible = false;
-                    AnimateView(SettingsView, SettingsViewScale, 1, 1.1, 1, 0);
+                    AnimateView(SettingsView, 1, 0);
                 }
             }
             else if (e.PropertyName == nameof(MainViewModel.ActionButtonText) && App.MainVM.ActionButtonText == "部署完成")
@@ -134,25 +134,19 @@ namespace GeekToolDownloader
             }
         }
 
-        private async void AnimateView(UIElement element, ScaleTransform transform, double fromScale, double toScale, double fromOp, double toOp)
+        private async void AnimateView(UIElement element, double fromOp, double toOp)
         {
             if (toOp > 0) element.Visibility = Visibility.Visible;
 
-            var duration = new Duration(TimeSpan.FromMilliseconds(400));
-            var ease = new QuarticEase { EasingMode = EasingMode.EaseInOut };
+            var duration = new Duration(TimeSpan.FromMilliseconds(250));
+            var ease = new QuadraticEase { EasingMode = EasingMode.EaseInOut };
 
-            var scaleAnim = new DoubleAnimation(fromScale, toScale, duration) { EasingFunction = ease, FillBehavior = FillBehavior.Stop };
             var opAnim = new DoubleAnimation(fromOp, toOp, duration) { EasingFunction = ease, FillBehavior = FillBehavior.Stop };
             
-            transform.ScaleX = toScale;
-            transform.ScaleY = toScale;
             element.Opacity = toOp;
-
-            transform.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
-            transform.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
             element.BeginAnimation(UIElement.OpacityProperty, opAnim);
 
-            await System.Threading.Tasks.Task.Delay(400);
+            await System.Threading.Tasks.Task.Delay(250);
 
             if (element.Opacity == 0)
             {
