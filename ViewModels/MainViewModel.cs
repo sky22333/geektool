@@ -294,8 +294,13 @@ namespace GeekToolDownloader.ViewModels
             });
         }
 
+        private bool _disposed;
+
         public void Dispose()
         {
+            if (_disposed) return;
+            _disposed = true;
+
             var cts = Interlocked.Exchange(ref _cts, null);
             if (cts == null) return;
 

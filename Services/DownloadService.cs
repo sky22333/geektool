@@ -32,13 +32,41 @@ namespace GeekToolDownloader.Services
     public class DownloadService : IDownloadService
     {
         private static HttpClient _httpClient = CreateHttpClient(new AppConfig());
+        private static readonly object _httpClientLock = new object();
 
         public static void UpdateHttpClient(AppConfig config)
         {
-            var oldClient = _httpClient;
-            _httpClient = CreateHttpClient(config);
-            // Do not dispose oldClient here to prevent breaking ongoing downloads. Let GC handle it.
-            // oldClient?.Dispose();
+            HttpClient? oldClient = null;
+            lock (_httpClientLock)
+            {
+                oldClient = _httpClient;
+                _httpClient = CreateHttpClient(config);
+            }
+
+            if (oldClient != null)
+            {
+                System.Threading.Tasks.Task.Run(() =>
+                {
+                    try
+                    {
+                        System.Threading.Thread.Sleep(2000);
+                        oldClient.Dispose();
+                    }
+                    catch { }
+                });
+            }
+        }
+
+        public static void DisposeHttpClient()
+        {
+            lock (_httpClientLock)
+            {
+                try
+                {
+                    _httpClient?.Dispose();
+                }
+                catch { }
+            }
         }
 
         private static HttpClient CreateHttpClient(AppConfig config)

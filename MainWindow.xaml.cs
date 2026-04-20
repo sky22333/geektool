@@ -28,14 +28,27 @@ namespace GeekToolDownloader
 
         protected override void OnClosed(EventArgs e)
         {
-            Microsoft.Win32.SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
-            if (App.MainVM != null)
-            {
-                App.MainVM.PropertyChanged -= MainVM_PropertyChanged;
-            }
-
+            UnsubscribeEvents();
             TrayIcon?.Dispose();
             base.OnClosed(e);
+        }
+
+        private void UnsubscribeEvents()
+        {
+            try
+            {
+                Microsoft.Win32.SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
+            }
+            catch { }
+
+            if (App.MainVM != null)
+            {
+                try
+                {
+                    App.MainVM.PropertyChanged -= MainVM_PropertyChanged;
+                }
+                catch { }
+            }
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -219,32 +232,30 @@ namespace GeekToolDownloader
             }
 
             _isExplicitExitRequested = true;
+
+            UnsubscribeEvents();
             App.MainVM?.Dispose();
 
             try
             {
                 TrayIcon?.Dispose();
             }
-            catch
-            {
-            }
-
-            // Synchronous deterministic shutdown path + timeout fallback.
-            using var forceExitTimer = new System.Threading.Timer(_ =>
-            {
-                Environment.Exit(0);
-            }, null, 1500, System.Threading.Timeout.Infinite);
+            catch { }
 
             try
             {
                 Hide();
                 Close();
             }
-            catch
-            {
-            }
+            catch { }
 
             Application.Current.Shutdown();
+
+            System.Threading.Tasks.Task.Run(async () =>
+            {
+                await System.Threading.Tasks.Task.Delay(3000);
+                Environment.Exit(0);
+            });
         }
 
         private void MinimizeToTray()

@@ -70,6 +70,9 @@ namespace GeekToolDownloader
         protected override void OnExit(ExitEventArgs e)
         {
             MainVM?.Dispose();
+            MainVM = null!;
+
+            DownloadService.DisposeHttpClient();
 
             if (_ownsSingleInstanceMutex && _singleInstanceMutex != null)
             {
