@@ -156,7 +156,7 @@ namespace GeekToolDownloader.ViewModels
             var path = PathInputText?.Trim();
             if (string.IsNullOrWhiteSpace(path))
             {
-                MessageBox.Show("请输入有效的路径", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                (Application.Current.MainWindow as MainWindow)?.ShowTrayNotification("提示", "请输入有效的路径");
                 return;
             }
 
@@ -164,21 +164,14 @@ namespace GeekToolDownloader.ViewModels
 
             var success = await Task.Run(() => _environmentService.AddToPath(path!));
             
+            var mainWindow = Application.Current.MainWindow as MainWindow;
             if (success)
             {
-                MessageBox.Show(
-                    $"已成功将以下路径添加到用户环境变量：\n\n{path}\n\n新打开的终端窗口将生效。",
-                    "环境变量已更新",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                mainWindow?.ShowTrayNotification("环境变量已更新", $"路径已添加：{path}");
             }
             else
             {
-                MessageBox.Show(
-                    "添加环境变量失败，请检查权限或手动添加。",
-                    "操作失败",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                mainWindow?.ShowTrayNotification("操作失败", "添加环境变量失败，请检查权限");
             }
         }
 

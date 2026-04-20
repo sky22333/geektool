@@ -130,7 +130,7 @@ namespace GeekToolDownloader
             }
             else if (e.PropertyName == nameof(MainViewModel.ActionButtonText) && App.MainVM.ActionButtonText == "部署完成")
             {
-                TrayIcon.ShowNotification("极客工具下载器", "所有选中的工具已安装部署完成");
+                TrayIcon?.ShowNotification("极客工具下载器", "所有选中的工具已安装部署完成");
             }
         }
 
@@ -262,6 +262,11 @@ namespace GeekToolDownloader
         {
             WindowState = WindowState.Minimized;
             Hide();
+        }
+
+        public void ShowTrayNotification(string title, string message)
+        {
+            TrayIcon?.ShowNotification(title, message);
         }
 
         public void ShowAddPathDialog()
