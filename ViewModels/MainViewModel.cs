@@ -218,7 +218,7 @@ namespace GeekToolDownloader.ViewModels
         private async Task ProcessToolAsync(ToolItemViewModel tool, string tempDir)
         {
             UpdateToolStatus(tool, "下载中...");
-            var safeName = string.Join("_", tool.Model.Name.Split(Path.GetInvalidFileNameChars()));
+            var safeName = InstallationService.GetSafeFileName(tool.Model.Name);
             var filePath = Path.Combine(tempDir, safeName + GetDownloadExtension(tool.Model));
 
             bool success = false;
@@ -300,6 +300,8 @@ namespace GeekToolDownloader.ViewModels
         {
             if (_disposed) return;
             _disposed = true;
+
+            Settings?.Dispose();
 
             var cts = Interlocked.Exchange(ref _cts, null);
             if (cts == null) return;
@@ -391,15 +393,25 @@ namespace GeekToolDownloader.ViewModels
 
         private void RefreshSelectionSummary()
         {
-            SelectedCount = Tools.Count(t => t.IsSelected);
-            var selectableTools = Tools.Where(t => !t.IsInstalled && !t.IsDownloading).ToList();
-            if (!selectableTools.Any())
+            int selectedCount = 0;
+            int selectableCount = 0;
+            int selectedSelectableCount = 0;
+
+            foreach (var tool in Tools)
             {
-                SelectAllButtonText = "一键全选";
-                return;
+                if (tool.IsSelected) selectedCount++;
+
+                if (!tool.IsInstalled && !tool.IsDownloading)
+                {
+                    selectableCount++;
+                    if (tool.IsSelected) selectedSelectableCount++;
+                }
             }
 
-            SelectAllButtonText = selectableTools.All(t => t.IsSelected) ? "取消全选" : "一键全选";
+            SelectedCount = selectedCount;
+            SelectAllButtonText = selectableCount > 0 && selectedSelectableCount == selectableCount
+                ? "取消全选"
+                : "一键全选";
         }
 
         private static void UpdateToolStatus(ToolItemViewModel tool, string status)
@@ -407,60 +419,46 @@ namespace GeekToolDownloader.ViewModels
             RunOnUi(() => tool.StatusText = status);
         }
 
+        private static readonly string[] ByteUnits = { "B", "KB", "MB", "GB", "TB" };
+
         private static void UpdateToolProgress(ToolItemViewModel tool, DownloadProgressInfo progress)
         {
             RunOnUi(() =>
             {
-                tool.TransferText = $"已下载 {FormatBytes(progress.DownloadedBytes)} · {FormatSpeed(progress.BytesPerSecond)}";
+                tool.TransferText = $"已下载 {FormatSize(progress.DownloadedBytes)} · {FormatSize(progress.BytesPerSecond)}/s";
             });
         }
 
-        private static string FormatBytes(long bytes)
+        private static string FormatSize(double bytes)
         {
-            string[] units = { "B", "KB", "MB", "GB", "TB" };
+            if (bytes <= 0) return "0 B";
+
             double size = bytes;
             int unit = 0;
-            while (size >= 1024 && unit < units.Length - 1)
+            while (size >= 1024 && unit < ByteUnits.Length - 1)
             {
                 size /= 1024;
                 unit++;
             }
 
-            return $"{size:0.##} {units[unit]}";
-        }
-
-        private static string FormatSpeed(double bytesPerSecond)
-        {
-            if (bytesPerSecond <= 0)
-            {
-                return "0 B/s";
-            }
-
-            string[] units = { "B/s", "KB/s", "MB/s", "GB/s" };
-            double speed = bytesPerSecond;
-            int unit = 0;
-            while (speed >= 1024 && unit < units.Length - 1)
-            {
-                speed /= 1024;
-                unit++;
-            }
-
-            return $"{speed:0.##} {units[unit]}";
+            return $"{size:0.##} {ByteUnits[unit]}";
         }
 
         private static string GetArchiveInstallDirectory(ToolItemViewModel tool) =>
             InstallationService.GetArchiveInstallDirectory(tool.Model);
 
+        private static readonly Dispatcher _uiDispatcher = Application.Current.Dispatcher;
+
         private static void RunOnUi(Action action)
         {
-            var dispatcher = Application.Current?.Dispatcher;
-            if (dispatcher == null || dispatcher.CheckAccess())
+            if (_uiDispatcher.CheckAccess())
             {
                 action();
-                return;
             }
-
-            dispatcher.BeginInvoke(action, DispatcherPriority.Render);
+            else
+            {
+                _uiDispatcher.InvokeAsync(action, DispatcherPriority.Normal);
+            }
         }
 
         private static void CleanupStaleTempDirectories(string rootDir, TimeSpan maxAge)

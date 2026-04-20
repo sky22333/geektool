@@ -45,11 +45,11 @@ namespace GeekToolDownloader.Services
 
             if (oldClient != null)
             {
-                System.Threading.Tasks.Task.Run(() =>
+                _ = Task.Run(async () =>
                 {
                     try
                     {
-                        System.Threading.Thread.Sleep(2000);
+                        await Task.Delay(2000);
                         oldClient.Dispose();
                     }
                     catch { }
@@ -91,11 +91,6 @@ namespace GeekToolDownloader.Services
             {
                 Timeout = TimeSpan.FromMinutes(15)
             };
-        }
-
-        public static HttpClient CreateConfiguredClient(AppConfig config)
-        {
-            return CreateHttpClient(config);
         }
 
         private static IWebProxy? CreateProxy(AppConfig config)
@@ -203,7 +198,7 @@ namespace GeekToolDownloader.Services
                             totalRead += bytesRead;
                             bytesSinceLastReport += bytesRead;
 
-                            if (sw.ElapsedMilliseconds >= 120)
+                            if (sw.ElapsedMilliseconds >= 300)
                             {
                                 var seconds = sw.Elapsed.TotalSeconds;
                                 var speed = seconds > 0 ? bytesSinceLastReport / seconds : 0;

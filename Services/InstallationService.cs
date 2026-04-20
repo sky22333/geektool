@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -16,6 +17,55 @@ namespace GeekToolDownloader.Services
 
     public class InstallationService : IInstallationService
     {
+        private static readonly Lazy<HashSet<string>> _installedApps = new Lazy<HashSet<string>>(() =>
+        {
+            var apps = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            
+            void ScanRegistry(RegistryKey baseKey, string path)
+            {
+                try
+                {
+                    using var key = baseKey.OpenSubKey(path);
+                    if (key == null) return;
+
+                    foreach (var subKeyName in key.GetSubKeyNames())
+                    {
+                        try
+                        {
+                            using var subKey = key.OpenSubKey(subKeyName);
+                            if (subKey != null)
+                            {
+                                var displayName = subKey.GetValue("DisplayName") as string;
+                                if (!string.IsNullOrEmpty(displayName))
+                                {
+                                    apps.Add(displayName!);
+                                }
+                            }
+                            if (!string.IsNullOrWhiteSpace(subKeyName))
+                            {
+                                apps.Add(subKeyName);
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+            }
+
+            ScanRegistry(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
+            ScanRegistry(Registry.LocalMachine, @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall");
+            ScanRegistry(Registry.CurrentUser, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
+
+            return apps;
+        });
+
+        private static readonly Lazy<string[]> _pathDirectories = new Lazy<string[]>(() =>
+        {
+            var pathEnv = Environment.GetEnvironmentVariable("PATH");
+            if (string.IsNullOrEmpty(pathEnv)) return Array.Empty<string>();
+            return pathEnv.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+        });
+
         public static string GetArchiveInstallDirectory(ToolItemModel tool)
         {
             var baseDir = Path.Combine(
@@ -23,7 +73,7 @@ namespace GeekToolDownloader.Services
                 "GeekToolDownloader",
                 "Packages");
 
-            var safeName = GetSafeDirectoryName(tool.Name);
+            var safeName = GetSafeFileName(tool.Name);
             return Path.Combine(baseDir, safeName);
         }
 
@@ -36,9 +86,7 @@ namespace GeekToolDownloader.Services
                 if (c.StartsWith("reg:", StringComparison.OrdinalIgnoreCase))
                 {
                     var regName = c.Substring(4).Trim();
-                    if (CheckRegistryKey(Registry.LocalMachine, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", regName) ||
-                        CheckRegistryKey(Registry.LocalMachine, $@"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall", regName) ||
-                        CheckRegistryKey(Registry.CurrentUser, $@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", regName))
+                    if (_installedApps.Value.Contains(regName))
                     {
                         return true;
                     }
@@ -53,30 +101,6 @@ namespace GeekToolDownloader.Services
             return false;
         }
 
-        private bool CheckRegistryKey(RegistryKey baseKey, string path, string appName)
-        {
-            try
-            {
-                using var key = baseKey.OpenSubKey(path);
-                if (key == null) return false;
-
-                // Directly check by key name first
-                using var directSubKey = key.OpenSubKey(appName);
-                if (directSubKey != null) return true;
-
-                // Fallback to iterating and checking DisplayName
-                foreach (var subKeyName in key.GetSubKeyNames())
-                {
-                    using var subKey = key.OpenSubKey(subKeyName);
-                    var displayName = subKey?.GetValue("DisplayName") as string;
-                    if (displayName != null && displayName.Contains(appName))
-                        return true;
-                }
-            }
-            catch { }
-            return false;
-        }
-
         private bool CheckPathRule(string pathRule)
         {
             if (string.IsNullOrWhiteSpace(pathRule)) return false;
@@ -87,30 +111,24 @@ namespace GeekToolDownloader.Services
             if (!Path.IsPathRooted(normalized))
             {
                 var fileName = Path.GetFileName(normalized);
-                var pathEnv = Environment.GetEnvironmentVariable("PATH");
-                if (!string.IsNullOrWhiteSpace(pathEnv))
+
+                foreach (var entry in _pathDirectories.Value)
                 {
-                    var paths = pathEnv.Split(';');
-                    foreach (var entry in paths)
+                    var baseDir = entry.Trim().Trim('"');
+                    if (string.IsNullOrWhiteSpace(baseDir)) continue;
+
+                    try
                     {
-                        var baseDir = entry.Trim().Trim('"');
-                        if (string.IsNullOrWhiteSpace(baseDir)) continue;
+                        var directCandidate = Path.Combine(baseDir, normalized);
+                        if (File.Exists(directCandidate) || Directory.Exists(directCandidate)) return true;
 
-                        try
+                        if (!string.IsNullOrWhiteSpace(fileName))
                         {
-                            var directCandidate = Path.Combine(baseDir, normalized);
-                            if (File.Exists(directCandidate) || Directory.Exists(directCandidate)) return true;
-
-                            if (!string.IsNullOrWhiteSpace(fileName))
-                            {
-                                var fileCandidate = Path.Combine(baseDir, fileName);
-                                if (File.Exists(fileCandidate)) return true;
-                            }
-                        }
-                        catch
-                        {
+                            var fileCandidate = Path.Combine(baseDir, fileName);
+                            if (File.Exists(fileCandidate)) return true;
                         }
                     }
+                    catch { }
                 }
 
                 var knownRoots = new[]
@@ -128,9 +146,7 @@ namespace GeekToolDownloader.Services
                         var candidate = Path.Combine(root, normalized);
                         if (File.Exists(candidate) || Directory.Exists(candidate)) return true;
                     }
-                    catch
-                    {
-                    }
+                    catch { }
                 }
             }
 
@@ -282,14 +298,12 @@ namespace GeekToolDownloader.Services
             }
         }
 
-        private static string GetSafeDirectoryName(string name)
+        public static string GetSafeFileName(string name)
         {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                return "Package";
-            }
+            if (string.IsNullOrWhiteSpace(name)) return "Package";
 
-            var safeName = string.Join("_", name.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries)).Trim();
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var safeName = string.Join("_", name.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries)).Trim();
             return string.IsNullOrWhiteSpace(safeName) ? "Package" : safeName;
         }
     }

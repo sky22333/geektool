@@ -19,6 +19,10 @@ namespace GeekToolDownloader.Services
     {
         private readonly string _configPath;
         private readonly string _localListPath;
+        private static readonly System.Net.Http.HttpClient _httpClient = new System.Net.Http.HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(10)
+        };
 
         public AppConfig Config { get; private set; } = new AppConfig();
 
@@ -89,11 +93,8 @@ namespace GeekToolDownloader.Services
             {
                 try
                 {
-                    using (var http = DownloadService.CreateConfiguredClient(Config))
-                    {
-                        var json = await http.GetStringAsync(Config.RemoteListUrl);
-                        list = JsonConvert.DeserializeObject<List<ToolItemModel>>(json);
-                    }
+                    var json = await _httpClient.GetStringAsync(Config.RemoteListUrl);
+                    list = JsonConvert.DeserializeObject<List<ToolItemModel>>(json);
                 }
                 catch { }
             }

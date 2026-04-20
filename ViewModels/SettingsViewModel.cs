@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GeekToolDownloader.Models;
@@ -5,9 +9,11 @@ using GeekToolDownloader.Services;
 
 namespace GeekToolDownloader.ViewModels
 {
-    public partial class SettingsViewModel : ObservableObject
+    public partial class SettingsViewModel : ObservableObject, IDisposable
     {
         private readonly IConfigurationService _configService;
+        private CancellationTokenSource? _saveDebounce;
+
         public AppConfig Config => _configService.Config;
 
         public SettingsViewModel(IConfigurationService configService)
@@ -41,35 +47,65 @@ namespace GeekToolDownloader.ViewModels
 
         partial void OnAutoStartChanged(bool value)
         {
-            _configService.Config.AutoStart = value;
-            _configService.SaveConfig();
+            bool success = TrySetAutoStart(value);
+            
+            if (success)
+            {
+                _configService.Config.AutoStart = value;
+                _configService.SaveConfig();
+            }
+            else if (value)
+            {
+                AutoStart = false;
+                System.Windows.MessageBox.Show(
+                    "无法设置开机自启动。请检查是否有足够的权限。", 
+                    "设置失败", 
+                    System.Windows.MessageBoxButton.OK, 
+                    System.Windows.MessageBoxImage.Warning);
+            }
+        }
 
+        private bool TrySetAutoStart(bool enable)
+        {
             try
             {
-                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
-                if (key != null)
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                    @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
+                
+                if (key == null) return false;
+
+                string appName = "GeekToolDownloader";
+                
+                if (enable)
                 {
-                    string appName = "GeekToolDownloader";
-                    if (value)
-                    {
-                        var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
-                        if (!string.IsNullOrEmpty(exePath))
-                        {
-                            key.SetValue(appName, $"\"{exePath}\"");
-                        }
-                    }
-                    else
-                    {
-                        key.DeleteValue(appName, false);
-                    }
+                    var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+                    if (string.IsNullOrEmpty(exePath)) return false;
+                    
+                    key.SetValue(appName, $"\"{exePath}\"");
                 }
+                else
+                {
+                    key.DeleteValue(appName, false);
+                }
+                
+                return true;
             }
-            catch { }
+            catch
+            {
+                return false;
+            }
         }
 
         partial void OnMaxConcurrentDownloadsChanged(int value)
         {
-            _configService.Config.MaxConcurrentDownloads = value;
+            var clampedValue = Math.Max(1, Math.Min(20, value));
+            if (clampedValue != value)
+            {
+                MaxConcurrentDownloads = clampedValue;
+                return;
+            }
+            
+            _configService.Config.MaxConcurrentDownloads = clampedValue;
             _configService.SaveConfig();
         }
 
@@ -82,7 +118,7 @@ namespace GeekToolDownloader.ViewModels
         partial void OnRemoteListUrlChanged(string value)
         {
             _configService.Config.RemoteListUrl = value;
-            _configService.SaveConfig();
+            DebounceSave();
         }
 
         partial void OnProxyEnabledChanged(bool value)
@@ -95,8 +131,49 @@ namespace GeekToolDownloader.ViewModels
         partial void OnProxyUrlChanged(string value)
         {
             _configService.Config.ProxyUrl = value;
-            _configService.SaveConfig();
-            DownloadService.UpdateHttpClient(_configService.Config);
+            DebounceProxyUpdate();
+        }
+
+        private void DebounceSave()
+        {
+            _saveDebounce?.Cancel();
+            _saveDebounce?.Dispose();
+            _saveDebounce = new CancellationTokenSource();
+            var token = _saveDebounce.Token;
+
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(500, token);
+                if (!token.IsCancellationRequested)
+                {
+                    _configService.SaveConfig();
+                }
+            }, token);
+        }
+
+        private void DebounceProxyUpdate()
+        {
+            _saveDebounce?.Cancel();
+            _saveDebounce?.Dispose();
+            _saveDebounce = new CancellationTokenSource();
+            var token = _saveDebounce.Token;
+
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(500, token);
+                if (!token.IsCancellationRequested)
+                {
+                    _configService.SaveConfig();
+                    DownloadService.UpdateHttpClient(_configService.Config);
+                }
+            }, token);
+        }
+
+        public void Dispose()
+        {
+            _saveDebounce?.Cancel();
+            _saveDebounce?.Dispose();
+            _saveDebounce = null;
         }
     }
 }
