@@ -1,0 +1,116 @@
+[
+  {
+    "Name": "Node.js (LTS)",
+    "Version": "v24.15.0",
+    "Url": "https://nodejs.org/dist/v24.15.0/node-v24.15.0-x64.msi",
+    "Check": [
+      "reg:Node.js",
+      "path:node.exe",
+      "path:nodejs\\node.exe"
+    ]
+  },
+  {
+    "Name": "Python 3.13",
+    "Version": "v3.13.13",
+    "Url": "https://www.python.org/ftp/python/3.13.13/python-3.13.13-amd64.exe",
+    "Args": "/quiet InstallAllUsers=1 PrependPath=1",
+    "Check": [
+      "reg:Python 3",
+      "path:python.exe",
+      "path:Python313\\python.exe"
+    ]
+  },
+  {
+    "Name": "Go",
+    "Version": "v1.26.2",
+    "Url": "https://go.dev/dl/go1.26.2.windows-amd64.msi",
+    "Check": [
+      "reg:Go Programming Language",
+      "path:go.exe",
+      "path:go\\bin\\go.exe"
+    ]
+  },
+  {
+    "Name": ".NET SDK 8.0.420",
+    "Version": "v8.0.420",
+    "Url": "https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.420/dotnet-sdk-8.0.420-win-x64.exe",
+    "Args": "/install /quiet /norestart",
+    "Check": [
+      "reg:.NET SDK",
+      "path:dotnet.exe",
+      "path:dotnet\\sdk\\8.0.420\\dotnet.dll"
+    ]
+  },
+  {
+    "Name": "Git for Windows",
+    "Version": "v2.53.0.3",
+    "Url": "https://github.com/git-for-windows/git/releases/download/v2.53.0.windows.3/Git-2.53.0.3-64-bit.exe",
+    "Args": "/VERYSILENT /NORESTART",
+    "Check": [
+      "reg:Git",
+      "path:git.exe",
+      "path:Git\\cmd\\git.exe"
+    ]
+  },
+  {
+    "Name": "Google Chrome",
+    "Version": "Enterprise64",
+    "Url": "https://dl.google.com/tag/s/dl/chrome/install/googlechromestandaloneenterprise64.msi",
+    "Check": [
+      "reg:Google Chrome",
+      "path:chrome.exe",
+      "path:Google\\Chrome\\Application\\chrome.exe"
+    ]
+  },
+  {
+    "Name": "QQ NT",
+    "Version": "v9.9.29.260401",
+    "Url": "https://dldir1v6.qq.com/qqfile/qq/QQNT/Windows/QQ_9.9.29_260401_x64_01.exe",
+    "Args": "/S",
+    "Check": [
+      "reg:QQ",
+      "path:QQ.exe",
+      "path:QQNT\\QQ.exe"
+    ]
+  },
+  {
+    "Name": "v2rayN",
+    "Version": "windows-64-desktop",
+    "Url": "https://v2rayn.2dust.link/v2rayN-windows-64-desktop.zip",
+    "Check": [
+      "path:v2rayN.exe",
+      "path:v2rayN\\v2rayN.exe"
+    ]
+  },
+  {
+    "Name": "FinalShell",
+    "Version": "x64",
+    "Url": "https://dl.hostbuf.com/finalshell3/finalshell_windows_x64.exe",
+    "Args": "/S",
+    "Check": [
+      "reg:FinalShell",
+      "path:finalshell.exe",
+      "path:FinalShell\\finalshell.exe"
+    ]
+  },
+  {
+    "Name": "汽水音乐",
+    "Version": "v3.2.1",
+    "Url": "https://lf-luna-release.qishui.com/obj/luna-release/3.2.1/343009595/SodaMusic-v3.2.1-official-win32_x64.exe",
+    "Args": "/S",
+    "Check": [
+      "reg:汽水音乐",
+      "reg:SodaMusic",
+      "path:SodaMusic.exe"
+    ]
+  },
+  {
+    "Name": "Windows Terminal",
+    "Version": "v1.24.10921.0",
+    "Url": "https://github.com/microsoft/terminal/releases/download/v1.24.10921.0/Microsoft.WindowsTerminal_1.24.10921.0_8wekyb3d8bbwe.msixbundle",
+    "Check": [
+      "path:wt.exe",
+      "path:Packages\\Microsoft.WindowsTerminal_8wekyb3d8bbwe\\LocalState"
+    ]
+  }
+]

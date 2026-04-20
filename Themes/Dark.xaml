@@ -1,0 +1,16 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color x:Key="ThemeAccentColor">#00f2ff</Color>
+    <SolidColorBrush x:Key="ThemeAccent" Color="{StaticResource ThemeAccentColor}"/>
+    <SolidColorBrush x:Key="BgBody" Color="#0a0b10"/>
+    <SolidColorBrush x:Key="BgWindow" Color="#F512141a"/> <!-- 0.96 alpha roughly -->
+    <SolidColorBrush x:Key="Line" Color="#14ffffff"/> <!-- 0.08 alpha -->
+    <SolidColorBrush x:Key="TextP1" Color="#ffffff"/>
+    <SolidColorBrush x:Key="TextP2" Color="#8a8a8e"/>
+    <SolidColorBrush x:Key="RowHover" Color="#0affffff"/> <!-- 0.04 alpha -->
+    <SolidColorBrush x:Key="ItemBg" Color="#07ffffff"/> <!-- 0.03 alpha -->
+    <SolidColorBrush x:Key="FooterBg" Color="#66000000"/> <!-- 0.4 alpha -->
+    <SolidColorBrush x:Key="TabBg" Color="#0cffffff"/> <!-- 0.05 alpha -->
+    <SolidColorBrush x:Key="RowActive" Color="#1400f2ff"/> <!-- 0.08 alpha -->
+    <Color x:Key="AcrylicColor">#12141a</Color>
+</ResourceDictionary>
