@@ -107,10 +107,10 @@
   {
     "Name": "Windows Terminal",
     "Version": "v1.24.10921.0",
-    "Url": "https://github.com/microsoft/terminal/releases/download/v1.24.10921.0/Microsoft.WindowsTerminal_1.24.10921.0_8wekyb3d8bbwe.msixbundle",
+    "Url": "https://github.com/microsoft/terminal/releases/download/v1.24.10921.0/Microsoft.WindowsTerminal_1.24.10921.0_x64.zip",
     "Check": [
       "path:wt.exe",
-      "path:Packages\\Microsoft.WindowsTerminal_8wekyb3d8bbwe\\LocalState"
+      "path:WindowsTerminal\\wt.exe"
     ]
   }
 ]
