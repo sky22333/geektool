@@ -1,8 +1,8 @@
 [
   {
     "Name": "Node.js (LTS)",
-    "Version": "v24.15.0",
-    "Url": "https://nodejs.org/dist/v24.15.0/node-v24.15.0-x64.msi",
+    "Version": "v24.1.0",
+    "Url": "https://mirrors.nju.edu.cn/nodejs-release/v24.1.0/node-v24.1.0-x64.msi",
     "Check": [
       "reg:Node.js",
       "path:node.exe",
@@ -12,18 +12,16 @@
   {
     "Name": "Python 3.13",
     "Version": "v3.13.13",
-    "Url": "https://www.python.org/ftp/python/3.13.13/python-3.13.13-amd64.exe",
-    "Args": "/quiet InstallAllUsers=1 PrependPath=1",
+    "Url": "https://mirrors.nju.edu.cn/python/3.13.13/python-3.13.13-amd64.exe",
+    "Args": "/quiet PrependPath=1",
     "Check": [
-      "reg:Python 3",
-      "path:python.exe",
-      "path:Python313\\python.exe"
+      "reg:Python 3.13.13 (64-bit)"
     ]
   },
   {
     "Name": "Go",
     "Version": "v1.26.2",
-    "Url": "https://go.dev/dl/go1.26.2.windows-amd64.msi",
+    "Url": "https://mirrors.hust.edu.cn/golang/go1.26.2/go1.26.2.windows-amd64.msi",
     "Check": [
       "reg:Go Programming Language",
       "path:go.exe",
@@ -36,15 +34,14 @@
     "Url": "https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.420/dotnet-sdk-8.0.420-win-x64.exe",
     "Args": "/quiet /norestart",
     "Check": [
-      "reg:.NET SDK",
-      "path:dotnet.exe",
+      "reg:Microsoft .NET SDK 8.0.420 (x64)",
       "path:dotnet\\sdk\\8.0.420\\dotnet.dll"
     ]
   },
   {
     "Name": "Git for Windows",
     "Version": "v2.53.0.3",
-    "Url": "https://github.com/git-for-windows/git/releases/download/v2.53.0.windows.3/Git-2.53.0.3-64-bit.exe",
+    "Url": "https://mirrors.huaweicloud.com/git-for-windows/v2.53.0.windows.3/Git-2.53.0.3-64-bit.exe",
     "Args": "/VERYSILENT /NORESTART",
     "Check": [
       "reg:Git",
@@ -74,15 +71,6 @@
     ]
   },
   {
-    "Name": "v2rayN",
-    "Version": "windows-64-desktop",
-    "Url": "https://v2rayn.2dust.link/v2rayN-windows-64-desktop.zip",
-    "Check": [
-      "path:v2rayN.exe",
-      "path:v2rayN\\v2rayN.exe"
-    ]
-  },
-  {
     "Name": "FinalShell",
     "Version": "x64",
     "Url": "https://dl.hostbuf.com/finalshell3/finalshell_windows_x64.exe",
@@ -105,12 +93,23 @@
     ]
   },
   {
+    "Name": "v2rayN",
+    "Version": "windows-64-desktop",
+    "Url": "https://hub.52013120.xyz/https://github.com/2dust/v2rayN/releases/download/7.20.4/v2rayN-windows-64-desktop.zip",
+    "Check": [
+      "path:v2rayN.exe",
+      "path:GeekToolDownloader\\Packages\\v2rayN",
+      "path:v2rayN"
+    ]
+  },
+  {
     "Name": "Windows Terminal",
     "Version": "v1.24.10921.0",
-    "Url": "https://github.com/microsoft/terminal/releases/download/v1.24.10921.0/Microsoft.WindowsTerminal_1.24.10921.0_x64.zip",
+    "Url": "https://hub.52013120.xyz/https://github.com/microsoft/terminal/releases/download/v1.24.10921.0/Microsoft.WindowsTerminal_1.24.10921.0_x64.zip",
     "Check": [
       "path:wt.exe",
-      "path:WindowsTerminal\\wt.exe"
+      "path:GeekToolDownloader\\Packages\\Windows Terminal",
+      "path:Windows Terminal"
     ]
   }
 ]
