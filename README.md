@@ -1,6 +1,6 @@
 # GeekToolDownloader
 
-一款极致现代化的 Windows 极客装机与工具分发引擎，基于 WPF 和 .NET Framework 4.8 打造。拥有 Win11 原生圆角、亚克力毛玻璃动效、无锁并发下载以及自动代理感知等高级特性。
+基于 WPF 和 .NET Framework 4.8 的常用工具安装器
 
 ## 编译与打包
 
